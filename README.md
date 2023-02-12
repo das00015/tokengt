@@ -16,10 +16,10 @@ docker run -it --gpus=all --ipc=host --name=tokengt -v /home:/home jw9730/tokeng
 
 Using the provided ```Dockerfile```
 ```bash
-git clone --recursive https://github.com/jw9730/tokengt.git /tokengt
+git clone --recursive git@github.com:das00015/tokengt.git
 cd tokengt
-docker build --no-cache --tag tokengt:latest .
-docker run -it --gpus all --ipc=host --name=tokengt -v /home:/home tokengt:latest bash
+docker build --no-cache --tag tokengt_deb:latest .
+docker run -it --gpus all --ipc=host --name=tokengt_deb -v /home:/home tokengt_deb:latest bash
 # upon completion, you should be at /tokengt inside the container
 ```
 
