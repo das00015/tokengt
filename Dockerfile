@@ -17,7 +17,7 @@ RUN update-alternatives --install /usr/bin/python python /usr/bin/python3.9 1
 RUN python -m pip install --upgrade wheel setuptools pip distlib
 
 RUN mkdir -p /tokengt
-RUN git clone --recursive https://github.com/jw9730/tokengt.git /tokengt
+RUN git clone --recursive https://github.com/das00015/tokengt.git /tokengt
 RUN git config --global --add safe.directory /tokengt
 RUN git config --global --add safe.directory /tokengt/large-scale-regression/fairseq
 WORKDIR /tokengt
