@@ -7,12 +7,6 @@ NeurIPS 2022
 ![image-tokengt](./tokengt.png)
 
 ## Setting up experiments
-Using the provided Docker image (recommended)
-```bash
-docker pull jw9730/tokengt:latest
-docker run -it --gpus=all --ipc=host --name=tokengt -v /home:/home jw9730/tokengt:latest bash
-# upon completion, you should be at /tokengt inside the container
-```
 
 Using the provided ```Dockerfile```
 ```bash
@@ -23,29 +17,9 @@ docker run -it --gpus all --ipc=host --name=tokengt_deb -v /home:/home tokengt_d
 # upon completion, you should be at /tokengt inside the container
 ```
 
-Using ```pip```
-```bash
-sudo apt-get update
-sudo apt-get install python3.9
-git clone --recursive https://github.com/jw9730/tokengt.git tokengt
-cd tokengt
-bash install.sh
-```
 
 ## Running experiments
 
-Synthetic second-order equivariant basis approximation
-```bash
-cd equivariant-basis-approximation/scripts
-
-# Train and save logs, ckpts, and attention maps (--save_display)
-bash [INPUT]-[NODE_IDENTIFIER]-[TYPE_IDENTIFIER].sh
-
-# Test and save attention maps (--save_display)
-bash [INPUT]-[NODE_IDENTIFIER]-[TYPE_IDENTIFIER]-test.sh
-
-# For the visualization of saved attention maps, please see viz_multi.ipynb
-```
 
 PCQM4Mv2 large-scale graph regression
 ```bash
@@ -77,7 +51,7 @@ Then, unzip ```ckpts``` and place it in the ```large-scale-regression/scripts```
 After that, you can resume the training from these checkpoints by adding the option ```--pretrained-model-name pcqv2-tokengt-[NODE_IDENTIFIER]-trained``` to the training scripts.
 
 ## References
-Our implementation uses code from the following repositories:
+The implementation uses code from the following repositories:
 - [Performer](https://github.com/lucidrains/performer-pytorch.git) for FAVOR+ attention kernel
 - [Graph Transformer](https://github.com/graphdeeplearning/graphtransformer.git), [SignNet](https://github.com/cptq/SignNet-BasisNet.git), and [SAN](https://github.com/DevinKreuzer/SAN/blob/main/data/molecules.py) for Laplacian eigenvectors
 - [Graphormer](https://github.com/microsoft/Graphormer.git) for PCQM4Mv2 experiment pipeline
