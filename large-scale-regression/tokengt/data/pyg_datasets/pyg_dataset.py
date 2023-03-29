@@ -22,6 +22,8 @@ class TokenGTPYGDataset(Dataset):
         valid_set=None,
         test_set=None,
     ):
+        ##
+        super().__init__()
         self.dataset = dataset
         if self.dataset is not None:
             self.num_data = len(self.dataset)
@@ -57,7 +59,8 @@ class TokenGTPYGDataset(Dataset):
             self.train_data = self.index_select(self.train_idx)
             self.valid_data = self.index_select(self.valid_idx)
             self.test_data = self.index_select(self.test_idx)
-        self.__indices__ = None
+        self._indices = None
+        self.transform = None
 
     def index_select(self, idx):
         dataset = copy.copy(self)
@@ -88,7 +91,7 @@ class TokenGTPYGDataset(Dataset):
         dataset.test_idx = None
         return dataset
 
-    def __getitem__(self, idx):
+    def get(self, idx):
         if isinstance(idx, int):
             item = self.dataset[idx]
             if item is not None:
@@ -98,5 +101,5 @@ class TokenGTPYGDataset(Dataset):
         else:
             raise TypeError("index to a TokenGTPYGDataset can only be an integer.")
 
-    def __len__(self):
+    def len(self):
         return self.num_data

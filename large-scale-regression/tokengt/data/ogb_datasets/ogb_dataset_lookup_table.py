@@ -4,7 +4,8 @@ Modified from https://github.com/microsoft/Graphormer
 
 from typing import Optional
 # from ogb.lsc.pcqm4mv2_pyg import PygPCQM4Mv2Dataset
-from .pcqm4mv2_pyg import PygPCQM4Mv2Dataset
+import torch
+from .pcqm4mv2_pyg import PygPCQM4Mv2Dataset, UPFD
 from torch_geometric.data import Dataset
 from ..pyg_datasets import TokenGTPYGDataset
 import torch.distributed as dist
@@ -35,8 +36,11 @@ class OGBDatasetLookupTable:
         if dataset_name == "pcqm4mv2":
             os.system("mkdir -p dataset/pcqm4m-v2/")
             os.system("touch dataset/pcqm4m-v2/RELEASE_v1.txt")
-            inner_dataset = MyPygPCQM4Mv2Dataset()
-            idx_split = inner_dataset.get_idx_split()
+            inner_dataset = UPFD(root=".", name="gossipcop", feature="content", split="train")
+            #idx_split = inner_dataset.get_idx_split()
+            print("downloaded UPFD")
+           
+            idx_split={"train":torch.LongTensor(range(len(inner_dataset))),"valid":torch.LongTensor(range(len(inner_dataset))),"test-dev":torch.LongTensor(range(len(inner_dataset)))}
             train_idx = idx_split["train"]
             valid_idx = idx_split["valid"]
             test_idx = idx_split["test-dev"]

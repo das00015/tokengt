@@ -16,6 +16,7 @@ from torch_geometric.data import Data as PYGDataset
 from dgl.data import DGLDataset
 from .ogb_datasets import OGBDatasetLookupTable
 
+from torch_geometric.data import Dataset, Data
 
 class BatchedDataDataset(FairseqDataset):
     def __init__(
@@ -59,6 +60,35 @@ class TargetDataset(FairseqDataset):
     def collater(self, samples):
         return torch.stack(samples, dim=0)
 
+
+
+
+class GraphNodeDataset(Dataset):
+    def __init__(self, root, transform=None, pre_transform=None):
+        super(GraphNodeDataset, self).__init__(root, transform, pre_transform)
+
+    @property
+    def raw_file_names(self):
+        return ['your_raw_data_files']
+
+    @property
+    def processed_file_names(self):
+        return ['your_processed_data_files']
+
+    def download(self):
+        # Download or preprocess your raw data files here
+
+    def process(self):
+        # Read and process your data into PyTorch Geometric Data objects
+        # You can create Data objects from your graph data, node features, and labels like this:
+        data = Data(x=node_features, edge_index=edge_index, y=labels)
+        torch.save(data, self.processed_paths[0])
+
+    def len(self):
+        return len(self.processed_file_names)
+
+    def get(self, idx):
+        return torch.load(self.processed_paths[idx])
 
 class TokenGTDataset:
     def __init__(

@@ -1,0 +1,8 @@
+The dataset has been integrated with Pytorch Geometric (PyG) and Deep Graph Library (DGL). You can load the dataset after installing the latest versions of PyG or DGL.
+
+The UPFD dataset includes two sets of tree-structured graphs curated for evaluating binary graph classification, graph anomaly detection, and fake/real news detection tasks. The dataset is dumped in the form of Pytorch-Geometric dataset object. You can easily load the data and run various GNN models using PyG.
+
+The dataset includes fake&real news propagation (retweet) networks on Twitter built according to fact-check information from Politifact and Gossipcop. The news retweet graphs were originally extracted by FakeNewsNet. Each graph is a hierarchical tree-structured graph where the root node represents the news; the leaf nodes are Twitter users who retweeted the root news. A user node has an edge to the news node if he/she retweeted the news tweet. Two user nodes have an edge if one user retweeted the news tweet from the other user.
+Four different node features are encoded using different encoders.
+    Please refer to `GNN-FakeNews
+    <https://github.com/safe-graph/GNN-FakeNews>`_ repo for more details.
