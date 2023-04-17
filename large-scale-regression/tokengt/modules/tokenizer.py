@@ -40,8 +40,8 @@ class GraphFeatureTokenizer(nn.Module):
         super(GraphFeatureTokenizer, self).__init__()
 
         self.encoder_embed_dim = hidden_dim
-
-        self.atom_encoder = nn.Embedding(num_atoms, hidden_dim, padding_idx=0)
+        self.atom_encoder = nn.Sequential(nn.Linear(310,512),nn.SiLU(),nn.Linear(512,hidden_dim))
+        #self.atom_encoder = nn.Embedding(num_atoms, hidden_dim, padding_idx=0)
         self.edge_encoder = nn.Embedding(num_edges, hidden_dim, padding_idx=0)
         self.graph_token = nn.Embedding(1, hidden_dim)
         self.null_token = nn.Embedding(1, hidden_dim)  # this is optional
@@ -230,8 +230,11 @@ class GraphFeatureTokenizer(nn.Module):
             batched_data["edge_num"]
         )
 
-        node_feature = self.atom_encoder(node_data).sum(-2)  # [sum(n_node), D]
-        edge_feature = self.edge_encoder(edge_data).sum(-2)  # [sum(n_edge), D]
+        node_feature = self.atom_encoder(node_data) # [sum(n_node), D]
+        edge_feature = self.edge_encoder(edge_data.long()).sum(-2)  # [sum(n_edge), D]
+
+        #node_feature = self.atom_encoder(node_data.long()).sum(-2)  # [sum(n_node), D]
+        #edge_feature = self.edge_encoder(edge_data).sum(-2)  # [sum(n_edge), D]
         device = node_feature.device
         dtype = node_feature.dtype
 
