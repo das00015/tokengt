@@ -29,10 +29,22 @@ class GraphPredictionL1Loss(FairseqCriterion):
         with torch.no_grad():
             natoms = max(sample["net_input"]["batched_data"]["node_num"])
 
+        # model's forward method unpacks the input data in the dictionary and assigns output of forward to logits
         logits = model(**sample["net_input"])
+
+        # for each sample in the batch; get the logits for the sample. get targets returns the target for each sample.
         targets = model.get_targets(sample, [logits])
 
-        loss = nn.L1Loss(reduction="sum")(logits, targets[: logits.size(0)])
+        # if the model is a binary classifier, the logits could be a single scalar value representing the probability of the positive class, 
+        # before being transformed to a probability using a sigmoid activation function.
+
+        #loss_fn = nn.BCEWithLogitsLoss()
+        #loss = loss_fn(logits, targets.float())
+    
+        # this is done to match the size of the logits tensor along the batch dimension.
+        new_targets = targets[: logits.size(0)].float()
+        loss = nn.BCEWithLogitsLoss(reduction="mean")(logits, new_targets) 
+        #loss = nn.L1Loss(reduction="sum")(logits, targets[: logits.size(0)]) # change this to cross entropy
 
         logging_output = {
             "loss": loss.data,
@@ -46,8 +58,9 @@ class GraphPredictionL1Loss(FairseqCriterion):
     def reduce_metrics(logging_outputs) -> None:
         """Aggregate logging outputs from data parallel training."""
         loss_sum = sum(log.get("loss", 0) for log in logging_outputs)
+        
         sample_size = sum(log.get("sample_size", 0) for log in logging_outputs)
-
+        print("sample size -->", sample_size)
         metrics.log_scalar("loss", loss_sum / sample_size, sample_size, round=6)
 
     @staticmethod
