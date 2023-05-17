@@ -1,0 +1,43 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+        "name": "Python: evaluate.py",
+        "type": "python",
+        "request": "launch",
+        "cwd" :"/tokengt/large-scale-regression/tokengt/evaluate/",
+        "program": "${workspaceFolder}/large-scale-regression/tokengt/evaluate/evaluate.py",
+        "args": [
+          "--user-dir", "../../tokengt",
+          "--num-workers", "16",
+          "--ddp-backend", "legacy_ddp",
+          "--dataset-name", "upfd",
+          "--dataset-source", "ogb",
+          "--task", "graph_prediction",
+          "--criterion", "l1_loss",
+          "--arch", "tokengt_base",
+          "--num-classes", "1",
+          "--batch-size", "32",
+          "--save-dir", "../../scripts/ckpts/upfd_test/",
+          "--split", "test",
+          "--metric", "auc",
+          "--prenorm"
+        ],
+        "console": "integratedTerminal"
+        },
+        {
+            "name": "Python: Current File",
+            "type": "python",
+            "request": "launch",
+            "program": "/usr/local/bin/fairseq-train",
+            "console": "integratedTerminal",
+            "justMyCode": false,
+            "cwd" :"/tokengt/large-scale-regression/scripts",
+            "env":{"CUDA_VISIBLE_DEVICES":"0"},
+            "args": ["--user-dir","../tokengt","--max-epoch","150","--num-workers","16","--ddp-backend=legacy_ddp","--dataset-name","upfd","--dataset-source","ogb","--task","graph_prediction","--criterion","l1_loss","--arch","tokengt_base","--orf-node-id","--orf-node-id-dim","64","--stochastic-depth","--prenorm","--num-classes","1","--attention-dropout","0.1","--act-dropout","0.1","--dropout","0.0","--optimizer","adam","--adam-betas","(0.9,0.999)","--adam-eps","1e-8","--clip-norm","5.0","--weight-decay","0.1","--lr-scheduler","polynomial_decay","--power","1","--warmup-updates","60000","--total-num-update","1000000","--lr","2e-4","--end-learning-rate","1e-9","--batch-size","32","--data-buffer-size","20","--save-dir","./ckpts/upfd","--tensorboard-logdir","./tb/upfd","--keep-best-checkpoints","20"]
+        }
+    ]
+}

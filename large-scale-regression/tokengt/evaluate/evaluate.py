@@ -11,6 +11,8 @@ import ogb
 import os
 from pathlib import Path
 from sklearn.metrics import roc_auc_score
+from sklearn.metrics import roc_auc_score, precision_score, recall_score, accuracy_score, f1_score
+
 
 import sys
 from os import path
@@ -22,30 +24,38 @@ import logging
 
 
 def eval(args, use_pretrained, checkpoint_path=None, logger=None):
+    #print("entered eval ")
     cfg = convert_namespace_to_omegaconf(args)
     np.random.seed(cfg.common.seed)
     utils.set_torch_seed(cfg.common.seed)
-
+    #print("cfg.task")
     # initialize task
     task = tasks.setup_task(cfg.task)
-    model = task.build_model(cfg.model)
-    print(model)
-
+    #print(task)
+    model = task.build_model(cfg.model) 
+    #print(model)
+    #print("model is loaded")
     # load checkpoint
     if use_pretrained:
         model_state = load_pretrained_model(cfg.task.pretrained_model_name)
     else:
         model_state = torch.load(checkpoint_path)["model"]
-
+        print("checkpoint loaded")
+        model_state.pop('encoder.graph_encoder.graph_feature.orf_encoder.weight', None)
+        #print(model_state)
+    
     model.load_state_dict(
-        model_state, strict=True, model_cfg=cfg.model
+        model_state, strict=True, model_cfg=cfg.model # error is here!!
     )
+    #print("model_state_loaded")
     del model_state
-
+    #print("model to device")
     model.to(torch.cuda.current_device())
     # load dataset
     split = args.split
+    print("split downloaded", split)
     task.load_dataset(split)
+    print("data loaded")
     batch_iterator = task.get_batch_iterator(
         dataset=task.dataset(split),
         max_tokens=cfg.dataset.max_tokens_valid,
@@ -71,7 +81,7 @@ def eval(args, use_pretrained, checkpoint_path=None, logger=None):
         log_interval=cfg.common.log_interval,
         default_log_format=("tqdm" if not cfg.common.no_progress_bar else "simple")
     )
-
+    print("eval starts")
     # infer
     y_pred = []
     y_true = []
@@ -105,6 +115,21 @@ def eval(args, use_pretrained, checkpoint_path=None, logger=None):
         if args.metric == "auc":
             auc = roc_auc_score(y_true, y_pred)
             logger.info(f"auc: {auc}")
+            # Add these lines for additional metrics
+            threshold = 0.5
+            pred_labels = (y_pred >= threshold).int()
+            true_labels = y_true.int()
+
+            precision = precision_score(true_labels, pred_labels)
+            recall = recall_score(true_labels, pred_labels)
+            accuracy = accuracy_score(true_labels, pred_labels)
+            f1 = f1_score(true_labels, pred_labels)
+
+            logger.info(f"precision: {precision}")
+            logger.info(f"recall: {recall}")
+            logger.info(f"accuracy: {accuracy}")
+            logger.info(f"f1 score: {f1}")
+
         elif args.metric == "mae":
             mae = (y_true - y_pred).abs().mean().item()
             logger.info(f"mae: {mae}")
@@ -123,9 +148,14 @@ def main():
         type=str,
     )
     args = options.parse_args_and_arch(parser, modify_parser=None)
+    print("Argument values:")
+    print(f"--user-dir: {args.user_dir}")
+    print(f"--num-workers: {args.num_workers}")
+# Add more print statements for other arguments as needed
+
     logger = logging.getLogger(__name__)
     if args.pretrained_model_name != "none":
-        eval(args, True, logger=logger)
+        eval(args, False, logger=logger)
     elif hasattr(args, "save_dir"):
         for checkpoint_fname in os.listdir(args.save_dir):
             checkpoint_path = Path(args.save_dir) / checkpoint_fname
