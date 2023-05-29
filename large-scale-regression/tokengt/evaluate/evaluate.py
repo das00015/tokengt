@@ -28,12 +28,14 @@ def eval(args, use_pretrained, checkpoint_path=None, logger=None):
     cfg = convert_namespace_to_omegaconf(args)
     np.random.seed(cfg.common.seed)
     utils.set_torch_seed(cfg.common.seed)
-    #print("cfg.task")
     # initialize task
     task = tasks.setup_task(cfg.task)
-    #print(task)
     model = task.build_model(cfg.model) 
     #print(model)
+    num_layers = model.encoder.encoder_layers
+    print("Number of layers:", num_layers)
+    #for name, param in model.named_parameters():
+    #    print(name, param.shape)
     #print("model is loaded")
     # load checkpoint
     if use_pretrained:
@@ -41,11 +43,11 @@ def eval(args, use_pretrained, checkpoint_path=None, logger=None):
     else:
         model_state = torch.load(checkpoint_path)["model"]
         print("checkpoint loaded")
-        model_state.pop('encoder.graph_encoder.graph_feature.orf_encoder.weight', None)
+        model_state.pop('encoder.graph_encoder.graph_feature.orf_encoder.weight', None) # check where this even comes from !!
         #print(model_state)
     
     model.load_state_dict(
-        model_state, strict=True, model_cfg=cfg.model # error is here!!
+        model_state, strict=True, model_cfg=cfg.model # error is here as model and ckpt config no match
     )
     #print("model_state_loaded")
     del model_state
@@ -90,9 +92,13 @@ def eval(args, use_pretrained, checkpoint_path=None, logger=None):
         for i, sample in enumerate(progress):
             sample = utils.move_to_cuda(sample)
             y = model(**sample["net_input"])
-            y = y.reshape(-1)
-            y_pred.extend(y.detach().cpu())
-            y_true.extend(sample["target"].detach().cpu().reshape(-1)[:y.shape[0]])
+            
+            # this is releasing the logits!!!
+            #y = y.reshape(-1)
+
+            #y_pred.extend(y.detach().cpu())
+            y_pred.extend(torch.sigmoid(y).detach().cpu()) # apply sigmoid to the logits to convert to probability
+            y_true.extend(sample["target"].detach().cpu().reshape(-1)[:y.shape[0]]) # what is this getting ?
             torch.cuda.empty_cache()
 
     # save predictions
@@ -148,19 +154,24 @@ def main():
         type=str,
     )
     args = options.parse_args_and_arch(parser, modify_parser=None)
-    print("Argument values:")
-    print(f"--user-dir: {args.user_dir}")
-    print(f"--num-workers: {args.num_workers}")
+    #print("Argument values:")
+    #print(f"--user-dir: {args.user_dir}")
+    #print(f"--num-workers: {args.num_workers}")
 # Add more print statements for other arguments as needed
 
     logger = logging.getLogger(__name__)
     if args.pretrained_model_name != "none":
         eval(args, False, logger=logger)
     elif hasattr(args, "save_dir"):
-        for checkpoint_fname in os.listdir(args.save_dir):
-            checkpoint_path = Path(args.save_dir) / checkpoint_fname
-            logger.info(f"evaluating checkpoint file {checkpoint_path}")
-            eval(args, False, checkpoint_path, logger)
+        # i want to only check the checkpoint.best file for now :
+        checkpoint_fname = "checkpoint_best.pt"
+        checkpoint_path = Path(args.save_dir) / checkpoint_fname
+        logger.info(f"evaluating checkpoint file {checkpoint_path}")
+        eval(args, False, checkpoint_path, logger)
+        #for checkpoint_fname in os.listdir(args.save_dir):
+        #    checkpoint_path = Path(args.save_dir) / checkpoint_fname
+        #    logger.info(f"evaluating checkpoint file {checkpoint_path}")
+        #    eval(args, False, checkpoint_path, logger)
 
 
 if __name__ == '__main__':
