@@ -43,7 +43,7 @@ class GraphPredictionConfig(FairseqDataclass):
     )
 
     max_nodes: int = field(
-        default=128,
+        default=512,
         metadata={"help": "max nodes per graph"},
     )
 

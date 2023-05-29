@@ -319,7 +319,7 @@ class TokenGTGraphEncoder(nn.Module):
                 inner_states.append(x)
             attn_dict['maps'][i] = attn
 
-        graph_rep = x[0, :, :]
+        graph_rep = x[0, :, :] # applies self attention and takes 0th time step  (B, D)
 
         if last_state_only:
             inner_states = [x]

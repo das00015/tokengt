@@ -40,9 +40,13 @@ class GraphFeatureTokenizer(nn.Module):
         super(GraphFeatureTokenizer, self).__init__()
 
         self.encoder_embed_dim = hidden_dim
+
         self.atom_encoder = nn.Sequential(nn.Linear(310,512),nn.SiLU(),nn.Linear(512,hidden_dim))
-        #self.atom_encoder = nn.Embedding(num_atoms, hidden_dim, padding_idx=0)
-        self.edge_encoder = nn.Embedding(num_edges, hidden_dim, padding_idx=0)
+        
+        # nn.Embedding to nn.Linear
+        #self.edge_encoder = nn.Embedding(num_edges, hidden_dim, padding_idx=0)
+        self.edge_encoder = nn.Sequential(nn.Linear(8,512),nn.SiLU(),nn.Linear(512,hidden_dim))
+
         self.graph_token = nn.Embedding(1, hidden_dim)
         self.null_token = nn.Embedding(1, hidden_dim)  # this is optional
 
@@ -206,9 +210,12 @@ class GraphFeatureTokenizer(nn.Module):
         padded_feature = torch.cat((special_token_feature, padded_feature), dim=1)  # [B, 2 + T, D]
         padding_mask = torch.cat((special_token_mask, padding_mask), dim=1)  # [B, 2 + T]
         return padded_feature, padding_mask
-
-    def forward(self, batched_data, perturb=None):
+    #The forward method performs the forward pass of the graph feature tokenizer network. 
+    #It takes input data, applies various transformations based on the initialized layers and parameters, 
+    # and returns the resulting padded feature tensor and padding mask.
+    def forward(self, batched_data, perturb=None): 
         (
+            # how do they batch the graphs ?
             node_data,
             in_degree,
             out_degree,
@@ -219,7 +226,7 @@ class GraphFeatureTokenizer(nn.Module):
             edge_data,
             edge_num
         ) = (
-            batched_data["node_data"],
+            batched_data["node_data"], # what is their shape ? Is it 1 ? 
             batched_data["in_degree"],
             batched_data["out_degree"],
             batched_data["node_num"],
@@ -230,11 +237,12 @@ class GraphFeatureTokenizer(nn.Module):
             batched_data["edge_num"]
         )
 
-        node_feature = self.atom_encoder(node_data) # [sum(n_node), D]
-        edge_feature = self.edge_encoder(edge_data.long()).sum(-2)  # [sum(n_edge), D]
+        node_feature = self.atom_encoder(node_data)
+        edge_feature = self.edge_encoder(edge_data)
 
-        #node_feature = self.atom_encoder(node_data.long()).sum(-2)  # [sum(n_node), D]
-        #edge_feature = self.edge_encoder(edge_data).sum(-2)  # [sum(n_edge), D]
+         # [sum(n_node), D]
+        #get shape of number of nodes, D = 3
+        #edge_feature = self.edge_encoder(edge_data.long()).sum(-2)  # [sum(n_edge), D]
         device = node_feature.device
         dtype = node_feature.dtype
 

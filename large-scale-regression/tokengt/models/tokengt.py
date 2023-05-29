@@ -1,7 +1,7 @@
 """
 Modified from https://github.com/microsoft/Graphormer
 """
-
+#-- this is batch norm -- 
 import logging
 
 import torch
@@ -17,6 +17,7 @@ from fairseq.models import (
 from fairseq.modules import (
     LayerNorm,
 )
+
 from fairseq.utils import safe_hasattr
 
 from ..modules import init_graphormer_params, TokenGTGraphEncoder
@@ -178,8 +179,8 @@ class TokenGTEncoder(FairseqEncoder):
         self.masked_lm_pooler = nn.Linear(args.encoder_embed_dim, args.encoder_embed_dim)
         self.lm_head_transform_weight = nn.Linear(args.encoder_embed_dim, args.encoder_embed_dim)
         self.activation_fn = utils.get_activation_fn(args.activation_fn)
-        self.layer_norm = LayerNorm(args.encoder_embed_dim)
-
+        self.layer_norm = nn.BatchNorm1d(args.encoder_embed_dim)
+        #LayerNorm(args.encoder_embed_dim)    
         self.lm_output_learned_bias = None
         if self.load_softmax:
             self.lm_output_learned_bias = nn.Parameter(torch.zeros(1))
@@ -196,28 +197,33 @@ class TokenGTEncoder(FairseqEncoder):
     def forward(self, batched_data, perturb=None, masked_tokens=None, **unused):
         inner_states, graph_rep, attn_dict = self.graph_encoder(batched_data, perturb=perturb)
 
-        x = inner_states[-1].transpose(0, 1)  # B x T x C
+        x = inner_states[-1].transpose(0, 1)  # B x T x C 
 
         # project masked tokens only
         if masked_tokens is not None:
             raise NotImplementedError
-
+        x = x[:,0,:]
         x = self.layer_norm(self.activation_fn(self.lm_head_transform_weight(x)))
 
         # project back to size of vocabulary
         if self.share_input_output_embed and hasattr(
                 self.graph_encoder.embed_tokens, "weight"
         ):
-            x = F.linear(x, self.graph_encoder.embed_tokens.weight)
+            #x = F.linear(x, self.graph_encoder.embed_tokens.weight) # see this masked prediction 
+            raise Exception("masked fixed")
         elif self.embed_out is not None:
             x = self.embed_out(x)
         if self.lm_output_learned_bias is not None:
             x = x + self.lm_output_learned_bias
 
         if self.return_attention:
-            return x[:, 0, :], attn_dict
+            return x, attn_dict
         else:
-            return x[:, 0, :]
+            return x
+        #if self.return_attention:
+        #    return x[:, 0, :], attn_dict
+        #else:
+        #    return x[:, 0, :]
 
     def performer_finetune_setup(self):
         self.graph_encoder.performer_finetune_setup()
@@ -275,7 +281,7 @@ def base_architecture(args):
 @register_model_architecture("tokengt", "tokengt_base")
 def tokengt_base_architecture(args):
     args.encoder_embed_dim = getattr(args, "encoder_embed_dim", 768)
-    args.encoder_layers = getattr(args, "encoder_layers", 12)
+    args.encoder_layers = getattr(args, "encoder_layers", 6) # change this to 4
     args.encoder_attention_heads = getattr(args, "encoder_attention_heads", 32)
     args.encoder_ffn_embed_dim = getattr(args, "encoder_ffn_embed_dim", 768)
     args.dropout = getattr(args, "dropout", 0.0)
