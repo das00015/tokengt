@@ -25,7 +25,8 @@ def preprocess_item(item):
     node_data = convert_to_single_emb(node_int_feature)
     if len(edge_int_feature.size()) == 1:
         edge_int_feature = edge_int_feature[:, None]
-    edge_data = convert_to_single_emb(edge_int_feature)
+    #edge_data = convert_to_single_emb(edge_int_feature) # YESSSSS !!!! this is the place
+    edge_data = edge_int_feature
 
     N = node_int_feature.size(0)
     dense_adj = torch.zeros([N, N], dtype=torch.bool)

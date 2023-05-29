@@ -25,8 +25,10 @@ class TokenGTPYGDataset(Dataset):
         ##
         super().__init__()
         self.dataset = dataset
+        
         if self.dataset is not None:
             self.num_data = len(self.dataset)
+            #print("dataset.shape --",self.num_data)
         self.seed = seed
         if train_idx is None and train_set is None:
             train_valid_idx, test_idx = train_test_split(

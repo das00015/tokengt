@@ -32,6 +32,8 @@ from torch_geometric.data import (
 from torch_geometric.io import read_txt_array
 from torch_geometric.utils import coalesce
 
+
+
 class UPFD(InMemoryDataset):
     r"""The tree-structured fake news propagation graph classification dataset
     from the `"User Preference-aware Fake News Detection"
@@ -113,6 +115,7 @@ class UPFD(InMemoryDataset):
 
         assert split in ['train', 'val', 'test']
         path = self.processed_paths[['train', 'val', 'test'].index(split)]
+        print("split loaded", path)
         self.data, self.slices = torch.load(path)
 
     @property
@@ -145,26 +148,28 @@ class UPFD(InMemoryDataset):
         x = torch.from_numpy(x.todense()).to(torch.float)
 
         edge_index = read_txt_array(osp.join(self.raw_dir, 'A.txt'), sep=',',
-                                    dtype=torch.long).t()
+                                    dtype=torch.long).t() # [2, num_edges]
 
-        edge_index = coalesce(edge_index, num_nodes=x.size(0))
-        # -- 
-        edge_attr = torch.zeros(edge_index.shape[1], 8)
+        edge_index = coalesce(edge_index, num_nodes=x.size(0)) # coalesce removes self loops 
+        # --  where i put the zeros of the edge features! 
+        edge_attr = torch.zeros(edge_index.shape[1], 8) # [num_edges, edge_a8]
 
         y = np.load(osp.join(self.raw_dir, 'graph_labels.npy'))
         y = torch.from_numpy(y).to(torch.long)
         _, y = y.unique(sorted=True, return_inverse=True)
 
-        batch = np.load(osp.join(self.raw_dir, 'node_graph_id.npy'))
+        batch = np.load(osp.join(self.raw_dir, 'node_graph_id.npy')) # loads the node to graph assignment
         batch = torch.from_numpy(batch).to(torch.long)
-
+        
         node_slice = torch.cumsum(batch.bincount(), 0)
-        node_slice = torch.cat([torch.tensor([0]), node_slice])
+        node_slice = torch.cat([torch.tensor([0]), node_slice]) # concat a zero tenso at the begining of node slice so starting index is 0 for first graph
         edge_slice = torch.cumsum(batch[edge_index[0]].bincount(), 0)
         edge_slice = torch.cat([torch.tensor([0]), edge_slice])
+        # FFF is this the issue ?
         edge_attr_slice = edge_slice
         #edge_attr_slice = torch.cumsum(batch[edge_attr[0]].bincount(), 0)
         #edge_attr_slice = torch.cat([torch.tensor([0]), edge_attr_slice])
+
         graph_slice = torch.arange(y.size(0) + 1)
         self.slices = {
             'x': node_slice,
@@ -192,15 +197,14 @@ class UPFD(InMemoryDataset):
  
 
 
-
 class PygPCQM4Mv2Dataset(InMemoryDataset):
     def __init__(self, root='dataset', smiles2graph=smiles2graph, transform=None, pre_transform=None):
-        """
-            Pytorch Geometric PCQM4Mv2 dataset object
-                - root (str): the dataset folder will be located at root/pcqm4m_kddcup2021
-                - smiles2graph (callable): A callable function that converts a SMILES string into a graph object
-                    * The default smiles2graph requires rdkit to be installed
-        """
+        
+            #Pytorch Geometric PCQM4Mv2 dataset object
+             #   - root (str): the dataset folder will be located at root/pcqm4m_kddcup2021
+              #  - smiles2graph (callable): A callable function that converts a SMILES string into a graph object
+               #     * The default smiles2graph requires rdkit to be installed
+        
 
         self.original_root = root
         self.smiles2graph = smiles2graph
@@ -288,10 +292,17 @@ class PygPCQM4Mv2Dataset(InMemoryDataset):
 if __name__ == '__main__':
     #dataset = PygPCQM4Mv2Dataset()
     dataset = UPFD(root=".", name="gossipcop", feature="content", split="train")
-    print(dataset)
-    print(dataset.data.edge_index)
-    print(dataset.data.edge_index.shape)
-    print(dataset.data.x.shape)
+    print(type(dataset))
+    print("no of features", dataset.num_features)
+    print("no of target", dataset.num_classes)
+    print("no of graphs", dataset.len)
+    print("edge_index", dataset.data.edge_index)
+    print("shape", dataset.data.edge_index.shape)
+    print("x shape", dataset.data.x.shape)
+    print()
     print(dataset[100])
+    print(dataset[100].x.shape)
+    print(dataset[100].num_nodes)
+    print(dataset[100].num_edges)
     print(dataset[100].y)
     #print(dataset.get_idx_split())

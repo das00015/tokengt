@@ -16,7 +16,6 @@ from torch_geometric.data import Data as PYGDataset
 from dgl.data import DGLDataset
 from .ogb_datasets import OGBDatasetLookupTable
 
-from torch_geometric.data import Dataset, Data
 
 class BatchedDataDataset(FairseqDataset):
     def __init__(
@@ -60,9 +59,10 @@ class TargetDataset(FairseqDataset):
     def collater(self, samples):
         return torch.stack(samples, dim=0)
 
+import os.path as osp
 
-
-
+import torch
+from torch_geometric.data import Dataset, download_url
 
 
 class TokenGTDataset:

@@ -49,6 +49,7 @@ class OGBDatasetLookupTable:
         if dataset_name == "upfd":
             
             print("now downloading upfd dataset")
+            
             train_dataset = UPFD(root=".", name="gossipcop", feature="content", split="train")
             test_dataset = UPFD(root=".", name="gossipcop", feature="content", split="test")
             val_dataset = UPFD(root=".", name="gossipcop", feature="content", split="val")
@@ -72,13 +73,13 @@ class OGBDatasetLookupTable:
             
             # this gets the ids of the train, test and val
             idx_split={"train":torch.LongTensor(range(0,len(train_dataset))),
-                       "valid":torch.LongTensor(range(len(train_dataset), len(train_dataset)+len(test_dataset))),
-                       "test-dev":torch.LongTensor(range(len(train_dataset)+len(test_dataset), len(train_dataset)+len(test_dataset)+len(val_dataset)))}
+                       "test-dev":torch.LongTensor(range(len(train_dataset), len(train_dataset)+len(test_dataset))),
+                       "valid":torch.LongTensor(range(len(train_dataset)+len(test_dataset), len(train_dataset)+len(test_dataset)+len(val_dataset)))}
             
             
             train_idx = idx_split["train"]
-            valid_idx = idx_split["valid"]
             test_idx = idx_split["test-dev"]
+            valid_idx = idx_split["valid"]
             
 
         else:
